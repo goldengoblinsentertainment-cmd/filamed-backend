@@ -2,7 +2,7 @@ package br.com.filamed.paciente.controller;
 
 import br.com.filamed.paciente.dto.AtualizacaoPacienteRequest;
 import br.com.filamed.paciente.dto.CadastroPacienteRequest;
-import br.com.filamed.paciente.model.Paciente;
+import br.com.filamed.paciente.dto.response.PacienteResponse;
 import br.com.filamed.paciente.service.PacienteService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pacientes")
+@RequestMapping("/pacientes")
 public class PacienteController {
 
     private final PacienteService pacienteService;
@@ -22,24 +22,26 @@ public class PacienteController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Paciente cadastrar(
+    public PacienteResponse cadastrar(
             @Valid @RequestBody CadastroPacienteRequest request
     ) {
         return pacienteService.cadastrar(request);
     }
 
     @GetMapping
-    public List<Paciente> listarTodos() {
+    public List<PacienteResponse> listarTodos() {
         return pacienteService.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public Paciente buscarPorId(@PathVariable Long id) {
+    public PacienteResponse buscarPorId(
+            @PathVariable Long id
+    ) {
         return pacienteService.buscarPorId(id);
     }
 
     @PutMapping("/{id}")
-    public Paciente atualizar(
+    public PacienteResponse atualizar(
             @PathVariable Long id,
             @Valid @RequestBody AtualizacaoPacienteRequest request
     ) {
@@ -48,7 +50,9 @@ public class PacienteController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void excluir(@PathVariable Long id) {
+    public void excluir(
+            @PathVariable Long id
+    ) {
         pacienteService.excluir(id);
     }
 }

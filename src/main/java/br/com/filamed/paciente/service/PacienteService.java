@@ -2,80 +2,77 @@ package br.com.filamed.paciente.service;
 
 import br.com.filamed.paciente.dto.AtualizacaoPacienteRequest;
 import br.com.filamed.paciente.dto.CadastroPacienteRequest;
-import br.com.filamed.paciente.model.Paciente;
+import br.com.filamed.paciente.dto.response.PacienteResponse;
+import br.com.filamed.paciente.entity.Paciente;
+import br.com.filamed.paciente.mapper.PacienteMapper;
+import br.com.filamed.paciente.repository.PacienteRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class PacienteService {
 
-    private final Map<Long, Paciente> pacientes =
-            new ConcurrentHashMap<>();
+    private final PacienteRepository pacienteRepository;
 
-    private final AtomicLong proximoId =
-            new AtomicLong(1);
+    public PacienteService(PacienteRepository pacienteRepository) {
+        this.pacienteRepository = pacienteRepository;
+    }
 
-    public Paciente cadastrar(
-            CadastroPacienteRequest request
-    ) {
-        validarCpfDuplicadoNoCadastro(request.cpf());
-
-        Long id = proximoId.getAndIncrement();
+    @Transactional
+    public PacienteResponse cadastrar(CadastroPacienteRequest request) {
+        if (pacienteRepository.existsByCpf(request.cpf())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Já existe um paciente cadastrado com este CPF"
+            );
+        }
 
         Paciente paciente = new Paciente(
-                id,
                 request.nomeCompleto(),
                 request.cpf(),
                 request.dataNascimento(),
                 request.telefone(),
                 request.email(),
-                request.fotoUrl(),
-                LocalDateTime.now()
+                request.fotoUrl()
         );
 
-        pacientes.put(id, paciente);
+        Paciente pacienteSalvo = pacienteRepository.save(paciente);
 
-        return paciente;
+        return PacienteMapper.paraResponse(pacienteSalvo);
     }
 
-    public List<Paciente> listarTodos() {
-        return pacientes.values()
+    @Transactional(readOnly = true)
+    public List<PacienteResponse> listarTodos() {
+        return pacienteRepository.findAll()
                 .stream()
-                .sorted(Comparator.comparing(Paciente::getId))
+                .map(PacienteMapper::paraResponse)
                 .toList();
     }
 
-    public Paciente buscarPorId(Long id) {
-        Paciente paciente = pacientes.get(id);
+    @Transactional(readOnly = true)
+    public PacienteResponse buscarPorId(Long id) {
+        Paciente paciente = buscarEntidadePorId(id);
 
-        if (paciente == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Paciente não encontrado"
-            );
-        }
-
-        return paciente;
+        return PacienteMapper.paraResponse(paciente);
     }
 
-    public Paciente atualizar(
+    @Transactional
+    public PacienteResponse atualizar(
             Long id,
             AtualizacaoPacienteRequest request
     ) {
-        Paciente paciente = buscarPorId(id);
+        Paciente paciente = buscarEntidadePorId(id);
 
-        validarCpfDuplicadoNaAtualizacao(
-                id,
-                request.cpf()
-        );
+        if (pacienteRepository.existsByCpfAndIdNot(request.cpf(), id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Já existe outro paciente cadastrado com este CPF"
+            );
+        }
 
         paciente.setNomeCompleto(request.nomeCompleto());
         paciente.setCpf(request.cpf());
@@ -84,53 +81,23 @@ public class PacienteService {
         paciente.setEmail(request.email());
         paciente.setFotoUrl(request.fotoUrl());
 
-        pacientes.put(id, paciente);
+        Paciente pacienteAtualizado = pacienteRepository.save(paciente);
 
-        return paciente;
+        return PacienteMapper.paraResponse(pacienteAtualizado);
     }
 
+    @Transactional
     public void excluir(Long id) {
-        Paciente paciente = buscarPorId(id);
+        Paciente paciente = buscarEntidadePorId(id);
 
-        pacientes.remove(paciente.getId());
+        pacienteRepository.delete(paciente);
     }
 
-    private void validarCpfDuplicadoNoCadastro(
-            String cpf
-    ) {
-        boolean cpfJaCadastrado = pacientes.values()
-                .stream()
-                .anyMatch(paciente ->
-                        paciente.getCpf().equals(cpf)
-                );
-
-        if (cpfJaCadastrado) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Já existe um paciente cadastrado com este CPF"
-            );
-        }
-    }
-
-    private void validarCpfDuplicadoNaAtualizacao(
-            Long id,
-            String cpf
-    ) {
-        boolean cpfPertenceAOutroPaciente =
-                pacientes.values()
-                        .stream()
-                        .filter(paciente ->
-                                !paciente.getId().equals(id)
-                        )
-                        .anyMatch(paciente ->
-                                paciente.getCpf().equals(cpf)
-                        );
-
-        if (cpfPertenceAOutroPaciente) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Já existe outro paciente cadastrado com este CPF"
-            );
-        }
+    private Paciente buscarEntidadePorId(Long id) {
+        return pacienteRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Paciente não encontrado"
+                ));
     }
 }
