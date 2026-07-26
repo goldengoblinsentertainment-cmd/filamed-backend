@@ -1,8 +1,8 @@
 package br.com.filamed.paciente.controller;
 
 import br.com.filamed.exception.ApiErrorResponse;
-import br.com.filamed.paciente.dto.AtualizacaoPacienteRequest;
-import br.com.filamed.paciente.dto.CadastroPacienteRequest;
+import br.com.filamed.paciente.dto.request.AtualizacaoPacienteRequest;
+import br.com.filamed.paciente.dto.request.CadastroPacienteRequest;
 import br.com.filamed.paciente.dto.response.PacienteResponse;
 import br.com.filamed.paciente.service.PacienteService;
 import io.swagger.v3.oas.annotations.Operation;

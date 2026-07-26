@@ -1,4 +1,4 @@
-package br.com.filamed.paciente.dto;
+package br.com.filamed.paciente.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
-public record AtualizacaoPacienteRequest(
+public record CadastroPacienteRequest(
 
         @NotBlank(message = "O nome completo é obrigatório")
         @Size(

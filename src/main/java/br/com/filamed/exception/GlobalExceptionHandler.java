@@ -1,5 +1,6 @@
 package br.com.filamed.exception;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -7,64 +8,72 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ApiErrorResponse> tratarResponseStatusException(
-            ResponseStatusException exception,
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> tratarRecursoNaoEncontrado(
+            EntityNotFoundException exception,
             HttpServletRequest request
     ) {
-        HttpStatus status = HttpStatus.valueOf(
-                exception.getStatusCode().value()
-        );
-
-        ApiErrorResponse resposta = new ApiErrorResponse(
-                LocalDateTime.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                exception.getReason(),
-                request.getRequestURI(),
-                null
+        ApiErrorResponse erro = ApiErrorResponse.criar(
+                HttpStatus.NOT_FOUND.value(),
+                "Recurso não encontrado",
+                exception.getMessage(),
+                request.getRequestURI()
         );
 
         return ResponseEntity
-                .status(status)
-                .body(resposta);
+                .status(HttpStatus.NOT_FOUND)
+                .body(erro);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> tratarConflito(
+            IllegalArgumentException exception,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse erro = ApiErrorResponse.criar(
+                HttpStatus.CONFLICT.value(),
+                "Conflito",
+                exception.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(erro);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> tratarValidacao(
+    public ResponseEntity<ApiErrorResponse> tratarErroDeValidacao(
             MethodArgumentNotValidException exception,
             HttpServletRequest request
     ) {
         Map<String, String> campos = new LinkedHashMap<>();
 
-        for (FieldError erro : exception.getBindingResult().getFieldErrors()) {
+        for (FieldError fieldError : exception.getBindingResult().getFieldErrors()) {
             campos.put(
-                    erro.getField(),
-                    erro.getDefaultMessage()
+                    fieldError.getField(),
+                    fieldError.getDefaultMessage()
             );
         }
 
-        ApiErrorResponse resposta = new ApiErrorResponse(
-                LocalDateTime.now(),
+        ApiErrorResponse erro = ApiErrorResponse.validacao(
                 HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                "Existem campos inválidos na requisição",
+                "Erro de validação",
+                "Existem campos inválidos na requisição.",
                 request.getRequestURI(),
                 campos
         );
 
         return ResponseEntity
-                .badRequest()
-                .body(resposta);
+                .status(HttpStatus.BAD_REQUEST)
+                .body(erro);
     }
 
     @ExceptionHandler(Exception.class)
@@ -72,17 +81,15 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
-        ApiErrorResponse resposta = new ApiErrorResponse(
-                LocalDateTime.now(),
+        ApiErrorResponse erro = ApiErrorResponse.criar(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Ocorreu um erro interno no servidor",
-                request.getRequestURI(),
-                null
+                "Erro interno do servidor",
+                "Ocorreu um erro inesperado no servidor.",
+                request.getRequestURI()
         );
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(resposta);
+                .body(erro);
     }
 }
