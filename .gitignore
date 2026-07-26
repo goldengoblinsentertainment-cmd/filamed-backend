@@ -1,0 +1,88 @@
+# ==========================
+# Spring Boot
+# ==========================
+HELP.md
+
+# ==========================
+# Maven
+# ==========================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ==========================
+# IntelliJ IDEA
+# ==========================
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# ==========================
+# VS Code
+# ==========================
+.vscode/
+
+# ==========================
+# Eclipse / STS
+# ==========================
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# ==========================
+# NetBeans
+# ==========================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ==========================
+# Sistema Operacional
+# ==========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================
+# Logs
+# ==========================
+*.log
+
+# ==========================
+# Arquivos temporários
+# ==========================
+*.tmp
+*.bak
+*.swp
+
+# ==========================
+# Variáveis de ambiente
+# ==========================
+.env
+.env.*
+
+# ==========================
+# Configurações locais
+# ==========================
+application-local.properties
+application-dev.properties
+
+# ==========================
+# Certificados
+# ==========================
+*.jks
+*.p12
+*.pem
+*.key
